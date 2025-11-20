@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timber Logs Management</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+body{background:#f0f2f5;}
+.card-custom{border-radius:12px;}
+.card-header-custom{background: linear-gradient(135deg,#6a11cb,#2575fc); color:white;}
+.selected-height-card{font-weight:bold;font-size:1.2rem;}
+.summary-card{border-radius:12px;padding:20px;color:white;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;font-size:1rem;}
+.summary-card i{font-size:1.5rem;}
+.table td, .table th{vertical-align:middle;}
+.girth-input-section input{max-width:150px;}
+.btn-add-log{animation:pulse 1.2s infinite;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+.height-inputs{display:flex;gap:0.5rem;align-items:center;}
+.height-inputs input{width:60px;}
+</style>
+</head>
+<body>
+<div class="container my-4">
+
+<!-- Header -->
+<div class="card mb-4 card-header-custom text-center py-3">
+     <h2>🪵 Wooden Log Volume Calculator</h2>
+      <p>Calculate and track the volume of your wooden logs with precision</p>
+</div>
+
+<!-- Supplier Details -->
+<div class="card mb-4 card-custom">
+    <div class="card-header bg-primary text-white"><i class="bi bi-person-badge"></i> Supplier Details</div>
+    <div class="card-body">
+        <form id="supplierForm" class="row g-3">
+            <div class="col-md-4">
+                <label for="supplierName" class="form-label">Supplier Name *</label>
+                <input type="text" id="supplierName" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label for="vehicleNumber" class="form-label">Vehicle Number *</label>
+                <input type="text" id="vehicleNumber" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label for="driverName" class="form-label">Driver Name *</label>
+                <input type="text" id="driverName" class="form-control" required>
+            </div>
+            <div class="col-12 mt-2">
+                <button type="button" class="btn btn-success" id="saveSupplierBtn"><i class="bi bi-save"></i> Save Supplier</button>
+                <button type="button" class="btn btn-warning" id="editSupplierBtn" disabled><i class="bi bi-pencil-square"></i> Edit Supplier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Height Selection -->
+<div class="card mb-4 card-custom">
+    <div class="card-header bg-info text-white"><i class="bi bi-arrows-expand"></i> Select Height</div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Feet</label>
+                <select id="heightFeet" class="form-select"><option value="">--Feet--</option></select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Inches</label>
+                <select id="heightInches" class="form-select"><option value="">--Inches--</option></select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" id="applyHeightBtn"><i class="bi bi-check-circle"></i> Apply Height</button>
+            </div>
+            <div class="col-md-3">
+                <div class="selected-height-card alert alert-info mb-0 text-center">Current Height: --</div>
+            </div>
+        </div>
+        <div class="mt-2 text-danger" id="heightChangeMsg" style="display:none;">Height changed! Apply new height before entering girths.</div>
+    </div>
+</div>
+
+<!-- Girth Input -->
+<div class="card mb-4 card-custom">
+    <div class="card-header bg-success text-white"><i class="bi bi-rulers"></i> Add Log Girth</div>
+    <div class="card-body d-flex flex-wrap align-items-end gap-2">
+        <input type="number" id="girthInput" placeholder="Enter Girth (inches)" class="form-control" min="1">
+        <button class="btn btn-success btn-add-log" id="addLogBtn"><i class="bi bi-plus-circle"></i> Add Log</button>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card mb-4 card-custom">
+    <div class="card-header bg-warning text-white"><i class="bi bi-table"></i> Logs Details</div>
+    <div class="card-body table-responsive">
+        <table class="table table-striped table-bordered" id="logsTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>S. No.</th>
+                    <th>Height (ft'in")</th>
+                    <th>Girth (inches)</th>
+                    <th>Volume (cu.ft)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Total Volume Card -->
+<div class="card mb-4 card-custom text-center py-3 bg-danger text-white">
+    <h4><i class="bi bi-box-seam"></i> Total Volume: <span id="totalVolume">0</span> cu.ft</h4>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4" id="summaryCards">
+    <div class="col-md-3">
+        <div class="summary-card bg-primary" id="totalLogsCard"><i class="bi bi-list-ol"></i> Total Logs: 0</div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card bg-warning" id="heightsUsedCard"><i class="bi bi-arrows-expand"></i> Heights Used: --</div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card bg-info" id="largestLogCard"><i class="bi bi-arrow-up-circle"></i> Largest Log: 0 in</div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card bg-danger" id="smallestLogCard"><i class="bi bi-arrow-down-circle"></i> Smallest Log: 0 in</div>
+    </div>
+</div>
+
+<!-- Bottom Actions -->
+<div class="d-flex gap-2 mb-5 flex-wrap justify-content-end">
+    <button class="btn btn-secondary" id="clearLogsBtn"><i class="bi bi-trash"></i> Clear Logs</button>
+    <button class="btn btn-danger" id="clearAllBtn"><i class="bi bi-x-circle"></i> Clear All</button>
+    <button class="btn btn-info" id="downloadPdfBtn"><i class="bi bi-download"></i> Download PDF</button>
+</div>
+
+<script>
+// Populate height selects
+const feetSelect = document.getElementById('heightFeet');
+const inchesSelect = document.getElementById('heightInches');
+for(let i=1;i<=30;i++){ feetSelect.innerHTML += `<option value="${i}">${i}</option>`;}
+for(let i=0;i<12;i++){ inchesSelect.innerHTML += `<option value="${i}">${i}</option>`;}
+
+let currentHeight=null;
+let logs=[];
+let supplierSaved=false;
+
+function updateSelectedHeightCard(){
+    document.querySelector('.selected-height-card').textContent = currentHeight ? 
+        `Current Height: ${currentHeight.feet}' ${currentHeight.inches}"` : "Current Height: --";
+}
+
+function calculateVolume(girthIn, heightFt, heightIn){
+    let height = parseInt(heightFt) + parseInt(heightIn)/12;
+    let diameterFt = (girthIn/12)/Math.PI;
+    let vol = Math.PI * (diameterFt/2)**2 * height;
+    return parseFloat(vol.toFixed(2));
+}
+
+// Update logs table
+function updateTable(){
+    const tbody = document.querySelector('#logsTable tbody');
+    tbody.innerHTML = '';
+    logs.forEach((log, index)=>{
+        let row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index+1}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm heightFt" value="${log.heightFeet}" style="width:60px; display:inline-block;" readonly> ft
+                <input type="number" class="form-control form-control-sm heightIn" value="${log.heightInches}" style="width:60px; display:inline-block;" readonly> in
+            </td>
+            <td><input type="number" class="form-control form-control-sm girth-input" value="${log.girth}" style="width:100px;" readonly></td>
+            <td>${log.volume}</td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-log"><i class="bi bi-pencil-square"></i></button>
+                <button class="btn btn-sm btn-danger remove-log"><i class="bi bi-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(row);
+
+        // Remove log
+        row.querySelector('.remove-log').onclick = ()=>{
+            logs.splice(index,1);
+            updateTable();
+            updateSummary();
+        };
+
+        // Edit/Save log
+        const editBtn = row.querySelector('.edit-log');
+        editBtn.onclick = ()=>{
+            const inputs = row.querySelectorAll('input');
+            if(editBtn.innerHTML.includes('pencil-square')){
+                // enable edit
+                inputs.forEach(inp=>inp.removeAttribute('readonly'));
+                editBtn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            }else{
+                // save changes
+                let newHeightFt = parseInt(inputs[0].value);
+                let newHeightIn = parseInt(inputs[1].value);
+                let newGirth = parseFloat(inputs[2].value);
+                if(isNaN(newGirth)||newGirth<=0||isNaN(newHeightFt)||isNaN(newHeightIn)){
+                    alert('Invalid input'); return;
+                }
+                log.heightFeet = newHeightFt;
+                log.heightInches = newHeightIn;
+                log.girth = newGirth;
+                log.volume = calculateVolume(newGirth,newHeightFt,newHeightIn);
+                updateTable();
+                updateSummary();
+            }
+        };
+    });
+    updateSummary();
+}
+
+// Update summary cards
+function updateSummary(){
+    let total = logs.reduce((sum,l)=>sum+l.volume,0);
+    document.getElementById('totalVolume').textContent = total.toFixed(2);
+    document.getElementById('totalLogsCard').textContent = `Total Logs: ${logs.length}`;
+    let heightsSet = new Set(logs.map(l=>l.heightFeet+"' "+l.heightInches+'"'));
+    document.getElementById('heightsUsedCard').textContent = `Heights Used: ${[...heightsSet].join(', ') || '--'}`;
+    if(logs.length>0){
+        let girths=logs.map(l=>l.girth);
+        document.getElementById('largestLogCard').textContent = `Largest Log: ${Math.max(...girths)} in`;
+        document.getElementById('smallestLogCard').textContent = `Smallest Log: ${Math.min(...girths)} in`;
+    } else {
+        document.getElementById('largestLogCard').textContent='Largest Log: 0 in';
+        document.getElementById('smallestLogCard').textContent='Smallest Log: 0 in';
+    }
+}
+
+// Height selection
+document.getElementById('applyHeightBtn').onclick = ()=>{
+    let feet=feetSelect.value; let inches=inchesSelect.value;
+    if(!feet){ alert('Select height'); return; }
+    currentHeight={feet:parseInt(feet), inches:parseInt(inches)};
+    updateSelectedHeightCard();
+    document.getElementById('heightChangeMsg').style.display='none';
+    document.getElementById('girthInput').disabled=false;
+};
+document.getElementById('heightFeet').onchange = document.getElementById('heightInches').onchange = ()=>{
+    if(currentHeight){ document.getElementById('heightChangeMsg').style.display='block';
+    document.getElementById('girthInput').disabled=true; }
+};
+
+// Add log
+function addLog(){
+    if(!currentHeight){ alert('Select height first'); return; }
+    let girth = parseFloat(document.getElementById('girthInput').value);
+    if(isNaN(girth)||girth<=0){ alert('Enter valid girth'); return;}
+    let vol = calculateVolume(girth,currentHeight.feet,currentHeight.inches);
+    logs.push({heightFeet:currentHeight.feet,heightInches:currentHeight.inches,girth,volume:vol});
+    updateTable();
+    document.getElementById('girthInput').value='';
+}
+document.getElementById('addLogBtn').onclick=addLog;
+document.getElementById('girthInput').addEventListener('keydown',(e)=>{if(e.key==='Enter'){addLog();}});
+
+// Clear
+document.getElementById('clearLogsBtn').onclick = ()=>{logs=[]; updateTable();};
+document.getElementById('clearAllBtn').onclick = ()=>{
+    logs=[]; currentHeight=null; feetSelect.value=''; inchesSelect.value='';
+    updateSelectedHeightCard(); updateTable();
+};
+
+// Supplier Save/Edit
+document.getElementById('saveSupplierBtn').onclick = ()=>{
+    let name=document.getElementById('supplierName').value.trim();
+    let vehicle=document.getElementById('vehicleNumber').value.trim();
+    let driver=document.getElementById('driverName').value.trim();
+    if(!name||!vehicle||!driver){ alert('Fill all supplier details'); return;}
+    supplierSaved=true;
+    document.getElementById('supplierName').readOnly=true;
+    document.getElementById('vehicleNumber').readOnly=true;
+    document.getElementById('driverName').readOnly=true;
+    document.getElementById('saveSupplierBtn').disabled=true;
+    document.getElementById('editSupplierBtn').disabled=false;
+};
+document.getElementById('editSupplierBtn').onclick = ()=>{
+    document.getElementById('supplierName').readOnly=false;
+    document.getElementById('vehicleNumber').readOnly=false;
+    document.getElementById('driverName').readOnly=false;
+    document.getElementById('saveSupplierBtn').disabled=false;
+    document.getElementById('editSupplierBtn').disabled=true;
+};
+
+// PDF generation
+document.getElementById('downloadPdfBtn').onclick = ()=>{
+    if(!supplierSaved){ alert('Save supplier details first'); return;}
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const today = new Date().toLocaleDateString();
+
+    let y = 20;
+    doc.setFontSize(16); doc.text("Bhat Wood and Timber Suppliers", 105, y, {align:'center'}); y+=7;
+    doc.setFontSize(12);
+    doc.text("Prop. MA Bhat", 105, y, {align:'center'}); y+=6;
+    doc.text("Contact: 9191919191", 105, y, {align:'center'}); y+=6;
+    doc.text("Address: New Town, Someroad City", 105, y, {align:'center'}); y+=10;
+
+    // Supplier details two-row layout
+    doc.text(`Supplier Name: ${document.getElementById('supplierName').value}`, 14, y);
+    doc.text(`Vehicle Number: ${document.getElementById('vehicleNumber').value}`, 135, y);
+    y+=6;
+    doc.text(`Driver Name: ${document.getElementById('driverName').value}`, 14, y);
+    doc.text(`Date: ${today}`, 135, y);
+    y+=10;
+
+    const tableData = logs.map((l,i)=>[i+1,`${l.heightFeet}' ${l.heightInches}"`,l.girth,l.volume]);
+    doc.autoTable({startY:y, head:[['S. No.','Height','Girth','Volume']], body:tableData});
+    y = doc.lastAutoTable.finalY + 10;
+    doc.text(`Total Volume: ${logs.reduce((sum,l)=>sum+l.volume,0).toFixed(2)} cu.ft`,14,y);
+    y+=20;
+    doc.text("Sign: MBBB",14,y);
+    doc.save('timber_logs.pdf');
+};
+</script>
+</body>
+</html>
