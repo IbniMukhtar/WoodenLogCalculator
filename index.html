@@ -153,12 +153,20 @@ function updateSelectedHeightCard(){
         `Current Height: ${currentHeight.feet}' ${currentHeight.inches}"` : "Current Height: --";
 }
 
+/* -------------------------------------------------------------
+   Quarter-Girth Formula  (Correct for your expected output)
+   V = ((G/4)^2 / 144) * Length(ft)
+-------------------------------------------------------------- */
 function calculateVolume(girthIn, heightFt, heightIn){
     let height = parseInt(heightFt) + parseInt(heightIn)/12;
-    let diameterFt = (girthIn/12)/Math.PI;
-    let vol = Math.PI * (diameterFt/2)**2 * height;
-    return parseFloat(vol.toFixed(2));
+
+    let quarter = girthIn / 4;
+    let vol = ((quarter ** 2) / 144) * height;
+
+    // TRUNCATE to 2 decimals (not round)
+    return Math.floor(vol * 100) / 100;
 }
+
 
 // Update logs table
 function updateTable(){
@@ -193,11 +201,9 @@ function updateTable(){
         editBtn.onclick = ()=>{
             const inputs = row.querySelectorAll('input');
             if(editBtn.innerHTML.includes('pencil-square')){
-                // enable edit
                 inputs.forEach(inp=>inp.removeAttribute('readonly'));
                 editBtn.innerHTML = '<i class="bi bi-check-lg"></i>';
             }else{
-                // save changes
                 let newHeightFt = parseInt(inputs[0].value);
                 let newHeightIn = parseInt(inputs[1].value);
                 let newGirth = parseFloat(inputs[2].value);
@@ -243,8 +249,10 @@ document.getElementById('applyHeightBtn').onclick = ()=>{
     document.getElementById('girthInput').disabled=false;
 };
 document.getElementById('heightFeet').onchange = document.getElementById('heightInches').onchange = ()=>{
-    if(currentHeight){ document.getElementById('heightChangeMsg').style.display='block';
-    document.getElementById('girthInput').disabled=true; }
+    if(currentHeight){ 
+        document.getElementById('heightChangeMsg').style.display='block';
+        document.getElementById('girthInput').disabled=true; 
+    }
 };
 
 // Add log
@@ -298,9 +306,9 @@ document.getElementById('downloadPdfBtn').onclick = ()=>{
     let y = 20;
     doc.setFontSize(16); doc.text("Bhat Wood and Timber Suppliers", 105, y, {align:'center'}); y+=7;
     doc.setFontSize(12);
-    doc.text("Prop. Mukhtar Ahmad Bhat", 105, y, {align:'center'}); y+=6;
-    doc.text("Contact: 9596663402", 105, y, {align:'center'}); y+=6;
-    doc.text("Address: Banimullah Kulgam, J&K", 105, y, {align:'center'}); y+=10;
+    doc.text("Prop. MA Bhat", 105, y, {align:'center'}); y+=6;
+    doc.text("Contact: 9191919191", 105, y, {align:'center'}); y+=6;
+    doc.text("Address: New Town, Someroad City", 105, y, {align:'center'}); y+=10;
 
     // Supplier details two-row layout
     doc.text(`Supplier Name: ${document.getElementById('supplierName').value}`, 14, y);
@@ -315,10 +323,9 @@ document.getElementById('downloadPdfBtn').onclick = ()=>{
     y = doc.lastAutoTable.finalY + 10;
     doc.text(`Total Volume: ${logs.reduce((sum,l)=>sum+l.volume,0).toFixed(2)} cu.ft`,14,y);
     y+=20;
-    doc.text("Sign: Mukhtar Ahmad Bhat",14,y);
+    doc.text("Sign: MBBB",14,y);
     doc.save('timber_logs.pdf');
 };
 </script>
 </body>
 </html>
-
