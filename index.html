@@ -298,9 +298,9 @@ document.getElementById('downloadPdfBtn').onclick = ()=>{
     let y = 20;
     doc.setFontSize(16); doc.text("Bhat Wood and Timber Suppliers", 105, y, {align:'center'}); y+=7;
     doc.setFontSize(12);
-    doc.text("Prop. MA Bhat", 105, y, {align:'center'}); y+=6;
-    doc.text("Contact: 9191919191", 105, y, {align:'center'}); y+=6;
-    doc.text("Address: New Town, Someroad City", 105, y, {align:'center'}); y+=10;
+    doc.text("Prop. Mukhtar Ahmad Bhat", 105, y, {align:'center'}); y+=6;
+    doc.text("Contact: 9596663402", 105, y, {align:'center'}); y+=6;
+    doc.text("Address: Banimullah Kulgam, J&K", 105, y, {align:'center'}); y+=10;
 
     // Supplier details two-row layout
     doc.text(`Supplier Name: ${document.getElementById('supplierName').value}`, 14, y);
@@ -315,9 +315,10 @@ document.getElementById('downloadPdfBtn').onclick = ()=>{
     y = doc.lastAutoTable.finalY + 10;
     doc.text(`Total Volume: ${logs.reduce((sum,l)=>sum+l.volume,0).toFixed(2)} cu.ft`,14,y);
     y+=20;
-    doc.text("Sign: MBBB",14,y);
+    doc.text("Sign: Mukhtar Ahmad Bhat",14,y);
     doc.save('timber_logs.pdf');
 };
 </script>
 </body>
 </html>
+
